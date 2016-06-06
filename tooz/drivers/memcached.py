@@ -224,8 +224,13 @@ class MemcachedDriver(coordination._RunWatchersMixin,
         self._member_id = member_id
         self._joined_groups = set()
         self._executor = utils.ProxyExecutor.build("Memcached", options)
-        self.host = (parsed_url.hostname or "localhost",
-                     parsed_url.port or 11211)
+        # self.host = (parsed_url.hostname or "localhost",
+        #              parsed_url.port or 11211)
+        self.host = []
+        for one_url in parsed_url:
+            tmp = (one_url.hostname or "localhost",
+                   one_url.port or 11211)
+            self.host.append(tmp)
         default_timeout = options.get('timeout', self.DEFAULT_TIMEOUT)
         self.timeout = int(default_timeout)
         self.membership_timeout = int(options.get(
@@ -258,13 +263,16 @@ class MemcachedDriver(coordination._RunWatchersMixin,
 
     @_translate_failures
     def _start(self):
-        self.client = pymemcache_client.PooledClient(
+        #self.client = pymemcache_client.PooledClient(
+        from pymemcache.client.hash import HashClient
+        self.client = HashClient(
             self.host,
             serializer=self._msgpack_serializer,
             deserializer=self._msgpack_deserializer,
             timeout=self.timeout,
             connect_timeout=self.timeout,
             max_pool_size=self.max_pool_size)
+
         # Run heartbeat here because pymemcache use a lazy connection
         # method and only connect once you do an operation.
         self.heartbeat()
@@ -286,7 +294,7 @@ class MemcachedDriver(coordination._RunWatchersMixin,
             except coordination.ToozError:
                 LOG.warning("Unable to leave group '%s'", g, exc_info=True)
         self._executor.stop()
-        self.client.close()
+        # self.client.close()
 
     def _encode_group_id(self, group_id):
         return self.GROUP_PREFIX + group_id

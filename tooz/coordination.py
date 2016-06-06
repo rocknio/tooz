@@ -605,22 +605,33 @@ def get_coordinator(backend_url, member_id,
                    options of the **same** name found in the ``backend_url``
                    arguments query string)
     """
-    parsed_url = netutils.urlsplit(backend_url)
-    parsed_qs = six.moves.urllib.parse.parse_qs(parsed_url.query)
-    if kwargs:
-        options = {}
-        for (k, v) in six.iteritems(kwargs):
-            options[k] = [v]
-        for (k, v) in six.iteritems(parsed_qs):
-            if k not in options:
-                options[k] = v
-    else:
-        options = parsed_qs
+    # parsed_url = netutils.urlsplit(backend_url)
+    # parsed_qs = six.moves.urllib.parse.parse_qs(parsed_url.query)
+    parsed_urls = []
+    for url in backend_url:
+        parsed_url = netutils.urlsplit(url)
+        parsed_urls.append(parsed_url)
+    #     # parsed_qs = six.moves.urllib.parse.parse_qs(parsed_url.query)
+    # if kwargs:
+    #     options = {}
+    #     for (k, v) in six.iteritems(kwargs):
+    #         options[k] = [v]
+    #     for (k, v) in six.iteritems(parsed_qs):
+    #         if k not in options:
+    #             options[k] = v
+    # else:
+    #     options = parsed_qs
+    options = {}
+    # d = driver.DriverManager(
+    #     namespace=TOOZ_BACKENDS_NAMESPACE,
+    #     name=parsed_url.scheme,
+    #     invoke_on_load=True,
+    #     invoke_args=(member_id, parsed_url, options)).driver
     d = driver.DriverManager(
         namespace=TOOZ_BACKENDS_NAMESPACE,
-        name=parsed_url.scheme,
+        name=parsed_urls[0].scheme,
         invoke_on_load=True,
-        invoke_args=(member_id, parsed_url, options)).driver
+        invoke_args=(member_id, parsed_urls, options)).driver
     characteristics = set(characteristics)
     driver_characteristics = set(getattr(d, 'CHARACTERISTICS', set()))
     missing_characteristics = characteristics - driver_characteristics
